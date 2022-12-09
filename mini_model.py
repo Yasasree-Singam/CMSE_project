@@ -18,6 +18,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
+from sklearn import set_config
 from sklearn.compose import ColumnTransformer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -366,8 +367,9 @@ with tab5:
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, stratify = y, random_state = 42)
     pipe1.fit(X_train, y_train)
     pipe2.fit(X_train, y_train)
-    
     st.write(smap)
+    set_config(display="diagram")
+    
 
     # clf = LogisticRegression(n_jobs = -1)
     y1_pred = pipe1.predict(smap)
