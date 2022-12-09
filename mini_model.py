@@ -146,21 +146,17 @@ with tab3:
     xp.to_streamlit(ret="selected_uids", key="hip").display()
 
 with tab4:
-    st.header("classification model")
+    st.header("Machine learning models")
     df = sns.load_dataset("penguins")
-    df_sex = df.dropna(subset=['sex']).copy()
+    df_sex = df.dropna(subset=['species']).copy()
     buffer = io.StringIO()
     df_sex.info(buf=buffer)
     s = buffer.getvalue()
     st.text(s)
-    st.write("Now we can see that there are no NaN values. For our understanding, let's just delete the bill length in 2nd column which has a value of 40.3 and species in 4th column which is Adelie")
     # df_sex.loc[2, 'bill_length_mm'] = np.nan
     # df_sex.loc[4, 'species'] = np.nan
     X = df_sex.copy()  # copy of the dataframe
-    y = X.pop('sex')      # pops out the sex column from the dataframe
-    lb = LabelBinarizer()   # converts the string data into int(0, 1....)
-    y = lb.fit_transform(y)
-    y = y.ravel()
+    y = X.pop('species')      # pops out the sex column from the dataframe
     categorical_columns = []
     numerical_columns = []
 
@@ -198,8 +194,7 @@ with tab4:
 #     names = ["Nearest Neighbors","RBF SVM","Decision Tree", "Random Forest","Neural Net", "Logistic Regression"] 
     
     st.write("""
-# Explore different classifier and datasets
-Which one is the best?
+# Explore different classifiers
 """)
     classifier_name = st.sidebar.selectbox(
     'Select classifier',
@@ -257,7 +252,7 @@ Which one is the best?
             clf = MLPClassifier(alpha= params['alpha'], max_iter= params['max_iter'])
         
         elif clf_name == "Logistic Regression":
-            clf = LogisticRegression(n_jobs = params['n_jobs'])
+            clf = LogisticRegression(n_jobs = params['n_jobs'])    
         else:
             clf = clf = RandomForestClassifier(n_estimators=params['n_estimators'], 
                 max_depth=params['max_depth'], random_state=1234)
@@ -265,59 +260,73 @@ Which one is the best?
 
     clf = get_classifier(classifier_name, params)
 
-    X_train, X_test, y_train, y_test = train_test_split(X_stupid, y, test_size=0.2, random_state=1234)
+    X_train, X_test, y_train, y_test = train_test_split(X_stupid, y, test_size=0.6, random_state=1234)
 
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
 
-    st.write(f'Classifier = {classifier_name}')
+    st.header(f'Classifier = {classifier_name}')
     st.write(f'Accuracy =', acc)
+
+    st.subheader("Confusion Matrix")
+    st.set_option('deprecation.showPyplotGlobalUse', False)
     cm = confusion_matrix(y_test, y_pred, labels=clf.classes_)
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm,display_labels=clf.classes_)
+    #ConfusionMatrixDisplay.from_estimator(clf, X_test, y_test, display_labels = clf.classes_).plot(cmap = 'gist_heat_r')
     
-    st.header("Confusion Matrix")
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm,display_labels=clf.classes_).plot()
+    st.pyplot()
+    # c = skplt.metrics.plot_confusion_matrix(y_test, y_pred, normalize=False, title = 'Confusion Matrix for GBC')
+    
 
-    fig=plt.figure(figsize=(1,1))
-    sns.heatmap(cm,annot=True)
-    st.pyplot(plt)
+    # fig=plt.figure(figsize=(1,1))
+    # sns.heatmap(cm,annot=True)
+    # st.pyplot(plt)
 
-    st.write(f'Males predicted as males= {cm[0,0]}')
-    st.write(f'Males predicted as Females = {cm[0,1]}')
-    st.write(f'Females predicted as males = {cm[1,0]}')
-    st.write(f'Females predicted as females= {cm[1,1]}')
-    st.write('For 0')
+    # st.write(f'Males predicted as males= {cm[0,0]}')
+    # st.write(f'Males predicted as Females = {cm[0,1]}')
+    # st.write(f'Females predicted as males = {cm[1,0]}')
+    # st.write(f'Females predicted as females= {cm[1,1]}')
+    # st.write('For 0')
 
-    st.write(f'True positive = {cm[0,0]}')
-    st.write(f'Flase Negative = {cm[0,1]}')
-    st.write(f'False positive = {cm[1,0]}')
-    st.write(f'True Negative= {cm[1,1]}')
+    # st.write(f'True positive = {cm[0,0]}')
+    # st.write(f'Flase Negative = {cm[0,1]}')
+    # st.write(f'False positive = {cm[1,0]}')
+    # st.write(f'True Negative= {cm[1,1]}')
 
-    st.write('For 1' )
-    st.write(f'True positive = {cm[1,1]}')
-    st.write(f'Flase Negative = {cm[1,0]}')
-    st.write(f'False positive = {cm[0,1]}')
-    st.write(f'True Negative = {cm[0,0]}')
+    # st.write('For 1' )
+    # st.write(f'True positive = {cm[1,1]}')
+    # st.write(f'Flase Negative = {cm[1,0]}')
+    # st.write(f'False positive = {cm[0,1]}')
+    # st.write(f'True Negative = {cm[0,0]}')
 
     report_dict = classification_report(y_test, y_pred, output_dict=True)
     cr = pd.DataFrame(report_dict)
-    st.header("Classification report")
+    st.subheader("Classification report")
     st.write(cr)
+    st.write('Precision: Indicates the proportion of positive identifications which were actually correct. A model which produces no false positives has precision of 1.0.')
+    st.write('Precision = True positives/ (True positives + False positives) = TP/(TP + FP)')
 
+    st.write('Recall:Indicates the proportion of actual positives which were correctly classified. A model which produces no false negatives has a recall of 1.0')
+    st.write('Recall = True positives/ (True positives + False negatives) = TP/ (TP + FN)')
+
+    st.write('F1-score: A combination of precision and recall. A perfect model achieve an F1-score of 1.0')
+    st.write('Support:The number of samples each metric was calculated on.')
+    st.write('Accuracy:How accurate the model is. Perfect accuracy is 1.0')
+    st.write('Accuracy = (True positives + True Negatives)/ (True positives + True negatives + False positives + False negatives) = (TP + TN)/ (TP + TN + FP + FN)')
+
+    st.write('Macro Avg:the average precision, recall and F1 score between classes.')
+    st.write('weighted avg:the weighted average precision, recall and F1 score between classes. Weighted means each metric is calculated with respect to how many samples there are in each class.')
 
 with tab5:
     st.header('User_inputs',anchor = None)
-    species= st.radio("What species do you want to check for?",
-    ('Adelie', 'Gentoo', 'Chinstrap'))
+    sex= st.radio("What sex do you want to check for?",
+    ('Female', 'Male'))
 
-    if species == 'Adelie':
-        st.write('You selected Adelie.')
-    elif species == 'Gentoo':
-        st.write('You selected Gento0.')
-    elif species == 'Chinstrap':
-        st.write('You selected Chinstrap')
+    if sex == 'Female':
+        st.write('You selected Female.')
     else:
-        st.write('You didnt select anything')
+        st.write('You selected Male')
 
     island= st.radio("What island do you want to check for?",
     ('Torgersen', 'Biscoe', 'Dream'))
@@ -343,7 +352,7 @@ with tab5:
     body_mass_g = st.slider('body_mass_g',2700,6300)
     st.write('Body mass is ', body_mass_g)
 
-    features={"species":species,'island':island,"bill_length_mm":bill_length_mm, "bill_depth_mm":bill_depth_mm,'flipper_length_mm':flipper_length_mm,'body_mass_g': body_mass_g}
+    features={'island':island,"bill_length_mm":bill_length_mm, "bill_depth_mm":bill_depth_mm,'flipper_length_mm':flipper_length_mm,'body_mass_g': body_mass_g,"sex":sex}
     smap = pd.DataFrame(features, index =[0])
 
     categorical_transformer = Pipeline(steps = [('imputer', SimpleImputer(strategy = 'most_frequent')),('onehot',OneHotEncoder())])
@@ -352,16 +361,29 @@ with tab5:
 
     preprocessor = ColumnTransformer(transformers = [('cat', categorical_transformer, categorical_columns), ('num',  numeric_transformer, numerical_columns)] )
 
-    pipe = Pipeline(steps = [('preprocessor', preprocessor),('classifier', LogisticRegression(n_jobs = -1))] )
+    pipe1 = Pipeline(steps = [('preprocessor', preprocessor),('classifier', LogisticRegression(n_jobs = -1))] )
+    pipe2 = Pipeline(steps = [('preprocessor', preprocessor),('classifier', KNeighborsClassifier(n_neighbors= 3))] )
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, stratify = y, random_state = 42)
-    pipe.fit(X_train, y_train)
+    pipe1.fit(X_train, y_train)
+    pipe2.fit(X_train, y_train)
+    
     st.write(smap)
 
     # clf = LogisticRegression(n_jobs = -1)
-    y_pred = pipe.predict(smap)
+    y1_pred = pipe1.predict(smap)
+    y2_pred = pipe2.predict(smap)
+   
 
-    if y_pred[0] == 0:
-        st.write('prediction = Male')
+    if y1_pred[0] == 'Adelie':
+        st.write('For Regression model prediction = Adelie')
+    elif y1_pred[0]=='Gentoo':
+        st.write('For Regression model prediction = Gentoo')
     else:
-        st.write('prediction = Female')
+        st.write('For Regression model prediction = Chinstrap')
     
+    if y2_pred[0] == 'Adelie':
+        st.write('For KNN model prediction = Adelie')
+    elif y2_pred[0]=='Gentoo':
+        st.write('For KNN model prediction = Gentoo')
+    else:
+        st.write('For KNN model prediction = Chinstrap')
