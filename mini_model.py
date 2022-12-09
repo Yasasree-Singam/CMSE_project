@@ -199,7 +199,7 @@ with tab4:
 """)
     classifier_name = st.sidebar.selectbox(
     'Select classifier',
-    ("KNN","SVM","Decision Tree", "Random Forest","Neural Net", "Logistic Regression")
+    ("Random Forest","KNN","SVM","Decision Tree", "Neural Net", "Logistic Regression")
 )
 #     classifiers = [
 #     KNeighborsClassifier(3),
